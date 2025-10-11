@@ -85,7 +85,7 @@ dados2 <- tibble(
     temperatura = round(case_when(
       formacao == "baixa" ~ rnorm(n(), 25, 1.5),
       formacao == "submontana" ~ rnorm(n(), 22, 1.2),
-      formacao == "montana" ~ rnorm(n(), 10, 1)
+      formacao == "montana" ~ rnorm(n(), 20, 1)
     ), 1),
     umidade = round(case_when(
       formacao == "baixa" ~ rnorm(n(), 83, 3),
