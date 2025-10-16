@@ -2,3 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+data/data_raw/MDE_TOPODATA/*
+outputs/espacial/*.tif
+outputs/espacial/*.gpkg
+*.csv
+*.rds
