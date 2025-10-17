@@ -2,6 +2,7 @@
 title: "Análise de atributos morfofisiológicos foliares de uma palmeira em ambientes de altitude"
 subtitle: "Trabalho final da disciplina de Fluxo de Trabalho Reprodutível com Dados Ecológicos em R"
 author: "Thays Klitzke"
+output-file: "relatoria_final.html"
 format: html
 editor: visual
 toc: true
@@ -12,12 +13,9 @@ O objetivo do presente projeto foi verificar a influência de variáveis abióti
 
 # 1. Dados
 
-Fonte de dados de altitude: Topodata
+Fonte de dados de altitude: [TOPODATA](http://www.dsr.inpe.br/topodata/acesso.php).
 
-Fonte dados de cobertura da MA
-
--   Fontes e links
--   Licença e termos de uso
+Fonte dados de cobertura da Mata Atlântica: MapBiomas
 
 ## 1.1. Dicionário de variáveis
 
