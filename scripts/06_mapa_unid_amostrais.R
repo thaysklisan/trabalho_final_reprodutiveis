@@ -4,6 +4,7 @@
 library(terra)
 library(geobr)
 library(readr)
+library(sf)
 
 #Shapes via geobr (dados vetoriais)
 # baixar estado da Bahia
@@ -13,11 +14,8 @@ bahia_v <- vect(bahia)  # converter para SpatVector
 brasil <- read_country(year = 2020, simplified = TRUE)
 brasil_v <- vect(brasil)
 
-shape_ma <- vect ("data/data_raw/mata_atlantica/dominio_WGS84_forest.shp")
-plot(shape_ma)
-
 pontos <- read_csv("outputs/tables/pontos.csv")
-altitude <- rast("outputs/espacial/altitude_mosaico.tif")
+alt_classificado <- rast("outputs/espacial/altitude_classificado.tif")
 
 # transformar tabela em spatvector
 pontos_vect <- vect(
@@ -30,24 +28,18 @@ plot(altitude)
 plot(bahia_v, add = T)
 plot(pontos_vect, add = T)
 
+# Transformar o SpatVector (pontos_vect) em um objeto sf
+pontos_sf <- st_as_sf(pontos_vect)
 
+# PREPARAÇÃO DOS DADOS
 
-
-# 1. Instalação e Carregamento de Pacotes
-library(terra)
-library(sf)
-library(ggplot2)
-library(RColorBrewer) 
-
-# --- 2. PREPARAÇÃO DOS DADOS ---
-
-# A. Raster de Altitude (Converter para Data Frame)
-altitude_df <- as.data.frame(altitude_floresta, xy=TRUE, na.rm=TRUE)
+# Raster de Altitude (Converter para Data Frame)
+altitude_df <- as.data.frame(alt_classificado, xy=TRUE, na.rm=TRUE)
 
 # Renomeia a coluna de altitude (3ª posição) para 'altitude_class'
 names(altitude_df)[3] <- "altitude_class"
 
-# B. Pontos de Coleta (Converter para SF e fator)
+# Pontos de Coleta (Converter para SF e fator)
 # O objeto 'pontos_sf' já está carregado e possui a coluna 'Categoria'.
 # Apenas garantimos que 'Categoria' seja um fator para a plotagem.
 pontos_sf$Categoria <- factor(pontos_sf$Categoria)
@@ -58,17 +50,15 @@ pontos_sf$Categoria <- factor(pontos_sf$Categoria)
 # Cores para os Pontos de Categoria (Manuais)
 cores_pontos <- c("1" = "blue", "2" = "red", "3" = "green")
 rotulos_pontos <- c(
-  "1" = "Categoria 1 (N=60)", 
-  "2" = "Categoria 2 (N=56)", 
-  "3" = "Categoria 3 (N=24)"
+  "1" = "Florestas de Terras Baixas (N=60)", 
+  "2" = "Florestas Submontanas (N=56)", 
+  "3" = "Florestas Montanas (N=24)"
 )
 
 # Cores para o Raster de Altitude (escala de cores contínua)
 cores_altitude <- colorRampPalette(brewer.pal(9, "YlOrRd"))(length(unique(altitude_df$altitude_class)))
 
-
-# --- 4. CONSTRUÇÃO DO MAPA (ggplot2) ---
-
+# CONSTRUÇÃO DO MAPA
 mapa_final <- ggplot() +
   
   # 1. CAMADA RASTER (BASE)
@@ -82,79 +72,46 @@ mapa_final <- ggplot() +
           stroke = 0.5) +
   
   # 3. ESCALAS E LEGENDAS
-  # Escala de Cores para o Raster (Altitude)
+  # Escala de cores para o Raster (Altitude)
   scale_fill_manual(
-    name = "Altitude (Classes)",
+    name = "Altitude",
     values = cores_altitude, 
     guide = "none" # Desliga a legenda do raster para não poluir
   ) +
   
-  # Escala de Cores para os Pontos (Categorias)
+  # Escala de Cores para os pontos (Categorias)
   scale_color_manual(
-    name = "Categorias de Amostragem",
+    name = "Indivíduos amostrados",
     values = cores_pontos,
     labels = rotulos_pontos
+  ) +
+  scale_x_continuous(
+    breaks = seq(-40, -39, by = 0.5), # Exemplo: De 0.5 em 0.5 graus
+    labels = function(x) paste0(abs(x), "°W") # Formato como no seu mapa
+  ) +
+  
+  # Eixo Y (Latitude): Reduz a frequência das grades
+  scale_y_continuous(
+    breaks = seq(-19, -13, by = 1), # Exemplo: De 1 em 1 grau (ou 0.5 se ainda for denso)
+    labels = function(y) paste0(abs(y), "°S") # Formato como no seu mapa
   ) +
   
   # 4. TÍTULOS E APARÊNCIA
   labs(
-    title = "Localização dos Pontos de Amostragem Estratificada na Mata Atlântica (BA)",
-    subtitle = "Amostragem em áreas florestadas, colorida por estrato de altitude",
-    caption = "Fontes: TOPODATA (MDE), MapBiomas (Fragmentos)"
+    title = "Localização dos pontos de amostragem de Euterpe edulis",
+    caption = "Fontes: TOPODATA e MapBiomas"
   ) +
-  
   theme_minimal() + 
   theme(
     legend.position = "right",
-    plot.title = element_text(face = "bold", size = 14),
-    axis.title = element_blank()
+    plot.title = element_text(face = "bold", size = 12, hjust = 0.5),
+    axis.title = element_blank(),
+    # Linhas de grade mais suaves
+    panel.grid.major = element_line(color = "gray80", linewidth = 0.3),
+    panel.grid.minor = element_blank()
   )
 
-# 5. SALVAR O MAPA EM ALTA RESOLUÇÃO
-caminho_saida_mapa <- "outputs/espacial/altitude_pontos_bahia_final.png"
-ggsave(caminho_saida_mapa, mapa_final, width = 12, height = 10, units = "in", dpi = 300)
+mapa_final
 
-# Certifique-se de estar na pasta raiz do projeto R antes de executar!
-
-# 1. Definir os arquivos/pastas grandes que CAUSARAM O ERRO DE 100MB
-# Estes são os arquivos que precisam ser removidos do rastreamento do Git.
-arquivos_grandes_remocao <- c(
-  "outputs/espacial/altitude_mosaico.tif",
-  "outputs/espacial/mapa_altitude_pontos_bahia_final.png",
-  "data/data_raw/mata_atlantica/fragment_forest_area.tif",
-  "data/data_raw/mata_atlantica/003_atlantic_spatial_forest_vegetation_binary.tif"
-)
-
-# 2. Remover as referências dos arquivos grandes do histórico do Git
-# O comando 'git rm --cached' remove o arquivo do repositório Git, 
-# mas o mantém no seu disco local.
-for (arquivo in arquivos_grandes_remocao) {
-  comando_git <- paste0("git rm --cached ", shQuote(arquivo))
-  message(paste("Executando:", comando_git))
-  # Executa o comando e captura o resultado
-  resultado <- system(comando_git) 
-  if (resultado != 0) {
-    message(paste("AVISO: Falha ao remover", arquivo, "do Git (Pode não estar em cache)."))
-  }
-}
-
-# 3. Adicionar Pastas de Dados Brutos e Outputs ao .gitignore
-# Isso impede que o Git rastreie NOVOS arquivos grandes nessas pastas.
-
-linhas_gitignore <- c(
-  # Ignora todos os arquivos TIFF na pasta de dados brutos
-  "data/data_raw/MDE_TOPODATA/*.tif", 
-  # Ignora toda a pasta 'espacial' em outputs (pois contém o mosaico e outros outputs grandes)
-  "outputs/espacial/",
-  # Ignorar arquivos grandes em geral
-  "*.tif",
-  "*.gpkg",
-  "*.csv"
-)
-
-# Abre o arquivo .gitignore (ou cria se não existir) e adiciona as linhas
-write(
-  linhas_gitignore,
-  file = ".gitignore",
-  append = TRUE # Adiciona ao final do arquivo existente
-)
+# SALVAR O MAPA
+ggsave("outputs/espacial/altitude_pontos_bahia_final.png", mapa_final, width = 12, height = 10, units = "in", dpi = 300)

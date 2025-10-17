@@ -2,7 +2,6 @@
 
 # carregar pacotes
 library(terra)
-library(geobr)
 library(utils)
 
 ## Carregar dados de altitude para a Bahia e unir quadriculas

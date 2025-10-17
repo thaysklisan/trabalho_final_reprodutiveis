@@ -1,11 +1,3 @@
-# objetivo: verificar a influencia de fatores abioticos em atributos foliares em diferentes altitudes
-# OK criar médias por unidades amostrais (grafico de umas duas variáveis)
-# OK criar as latitudes e longitudes
-# extrair altitude e adicionar na tabela
-# Fazer uma regressão altitude e uma resposta
-# Fazer mapa das unidades amostrais (9),
-# colorir os 20 pontos de cada unidade de acordo com a altitude
-
 ### exploratorias dos dados ###
 
 # pacotes necessarios
